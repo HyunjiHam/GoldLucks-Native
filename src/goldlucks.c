@@ -8,16 +8,19 @@ typedef struct appdata {
 	const char *name;
 	Evas_Object *win;
 	Evas_Object *conform;
+
 	Evas_Object *nf;
 	Evas_Object *scroller;
 	Evas_Object *tabbar;
 
-//	Evas_Object *first_view_rect;
-//	Evas_Object *second_view_rect;
-//	Evas_Object *third_view_rect;
-//	Evas_Object *fourth_view_rect;
-} appdata_s;
+	Evas_Object *first_view_rect;
+	Evas_Object *second_view_rect;
+	Evas_Object *third_view_rect;
+	Evas_Object *fourth_view_rect;
 
+	Evas_Object	*gl_income; //from income_view
+//	sqlite3 *income_db; // Database handle
+} appdata_s;
 
 static void
 win_delete_request_cb(void *data, Evas_Object *obj, void *event_info)
@@ -63,6 +66,14 @@ create_drawer_layout(Evas_Object *parent)
 	return layout;
 }
 
+//income_view에서 저장한 내용 출
+//Evas_Object *ui_utils_create_genlist(Evas_Object *parent)
+//{
+//	Evas_Object *gen_list = elm_genlist_add(parent);
+//	elm_genlist_mode_set(gen_list, ELM_LIST_COMPRESS);
+//	return gen_list;
+//}
+
 static Evas_Object *
 create_main_view(appdata_s *ad)
 {
@@ -77,6 +88,23 @@ create_main_view(appdata_s *ad)
 	evas_object_size_hint_weight_set(box, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(box, EVAS_HINT_FILL, EVAS_HINT_FILL);
 	elm_object_part_content_set(layout, "elm.swallow.content", box);
+
+	/*Income label*/
+	Evas_Object *label_income = elm_label_add(box);
+	evas_object_size_hint_weight_set(label_income, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(label_income, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	//elm_object_part_content_set(ad->nf, "elm.swallow.label.events", label_income);
+	elm_object_text_set(label_income, "<font_size=70>Income</font_size>");
+	evas_object_color_set(label_income, 0, 0, 0, 255);
+	elm_box_pack_end(box, label_income);
+	evas_object_show(label_income);
+
+//	/*Create genlist Income from income_view*/
+//	ad->gl_income = ui_utils_create_genlist(layout);
+//	evas_object_size_hint_weight_set(ad->gl_income, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+//	evas_object_size_hint_align_set(ad->gl_income, EVAS_HINT_FILL, EVAS_HINT_FILL);
+//	elm_object_part_content_set(layout, "elm.swallow.genlist.events", ad->gl_income);
+//	evas_object_show(ad->gl_income);
 
 
 	return layout;
@@ -113,15 +141,21 @@ create_panel(Evas_Object *parent)
 	list = elm_list_add(panel);
 	evas_object_size_hint_weight_set(list, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(list, EVAS_HINT_FILL, EVAS_HINT_FILL);
-	for (i = 0; i < 20; i++) {
-		sprintf(buf, "list item %d", i);
-		elm_list_item_append(list, buf, NULL, NULL, NULL, NULL);
-	}
 
+	sprintf(buf, "<font_size=80>Gold Lucks</font_size>");
+	elm_list_item_append(list, buf, NULL, NULL, NULL,NULL);
+	sprintf(buf, "ANALYSIS");
+	elm_list_item_append(list, buf, NULL, NULL, list_item_clicked1, parent);
+	sprintf(buf, "TO SHARE");
+	elm_list_item_append(list, buf, NULL, NULL, list_item_clicked2, parent);
+	sprintf(buf, "FIXED EXPENSES");
+	elm_list_item_append(list, buf, NULL, NULL, list_item_clicked3, parent);
+	sprintf(buf, "SETTINGS");
+	elm_list_item_append(list, buf, NULL, NULL, list_item_clicked4, parent);
 	evas_object_show(list);
 
 	elm_object_content_set(panel, list);
-
+	evas_object_show(panel);
 	return panel;
 }
 
@@ -162,10 +196,10 @@ view_size_reset(void *data, Evas *e, Evas_Object *obj, void *event_info)
 	evas_object_geometry_get(ad->scroller, NULL, NULL, NULL, &h);
 
 	elm_scroller_page_size_set(ad->scroller, w, h);
-//	evas_object_size_hint_min_set(ad->first_view_rect, w, h);
-//	evas_object_size_hint_min_set(ad->second_view_rect, w, h);
-//	evas_object_size_hint_min_set(ad->third_view_rect, w, h);
-//	evas_object_size_hint_min_set(ad->fourth_view_rect, w, h);
+	evas_object_size_hint_min_set(ad->first_view_rect, w, h);
+	evas_object_size_hint_min_set(ad->second_view_rect, w, h);
+	evas_object_size_hint_min_set(ad->third_view_rect, w, h);
+	evas_object_size_hint_min_set(ad->fourth_view_rect, w, h);
 }
 static void
 btn_cb(void *data, Evas_Object *obj, void *event_info)
@@ -213,6 +247,7 @@ main_btn2_cb(void *data, Evas_Object *obj, void *event_info){
 
 }
 
+
 static void
 create_base_gui(appdata_s *ad)
 {
@@ -237,8 +272,9 @@ create_base_gui(appdata_s *ad)
 	elm_object_content_set(ad->conform, ad->nf);
 
 	layout = create_main_view(ad);
-	nf_it = elm_naviframe_item_push(ad->nf, "Gold Lucks", NULL, NULL, layout,
-			"basic");
+	evas_object_show(layout);
+
+	nf_it = elm_naviframe_item_push(ad->nf, "Gold Lucks", NULL, NULL, layout,"basic");
 
 	/* Drawer bg */
 	bg = create_bg(layout);
@@ -260,6 +296,7 @@ create_base_gui(appdata_s *ad)
 	evas_object_smart_callback_add(btn,"clicked",main_btn2_cb,ad->nf);
 	elm_object_item_part_content_set(nf_it,"title_right_btn",btn);
 	elm_object_text_set(btn, "<align=center> <font_size=80> + </align></font_size>");
+
 
 
 	/* Show window after base gui is set up */
